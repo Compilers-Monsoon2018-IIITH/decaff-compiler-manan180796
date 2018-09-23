@@ -1,0 +1,9 @@
+class Program { 
+    void fabonacci(int n,int a,int b){
+        for m = 1 , n {
+            callout("printf","%d ",a);
+            b = a + b;
+            a = b - a;
+        }
+    }
+}
