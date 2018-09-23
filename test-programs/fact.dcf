@@ -1,0 +1,11 @@
+class Program {
+
+    int factorial(int n){
+        int fact;
+        fact = 1;
+        for m = 1 , n {
+            fact = fact * m;
+        }
+        return fact;
+    }
+}
