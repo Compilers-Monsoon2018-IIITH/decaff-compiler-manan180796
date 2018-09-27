@@ -17,7 +17,7 @@ int lineno = 0;
 
 
 
-{alpha}({alpha}|{digit})*	    {return id;}
+{alpha}({alpha}|{digit})*       {return id;}
 {digit}+                        {return decimal_literal;}
 0x{hex_digit}+                  {return hex_literal;}
 '{char}'                        {return char_literal;}
@@ -25,13 +25,13 @@ int lineno = 0;
 
 
 "<="                            {return le_eq_op;}
-">="					        {return gr_eq_op;}
+">="                            {return gr_eq_op;}
 
 "=="                            {return eq_op;}
-"!="					        {return not_eq_op;}
+"!="                            {return not_eq_op;}
 
-"&&"					        {return and_op;}
-"||"					        {return or_op;}
+"&&"                            {return and_op;}
+"||"                            {return or_op;}
 
 
 
