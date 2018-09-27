@@ -44,12 +44,12 @@ int lineno = 0;
 "%"                             {return '%';}
 
 "<"                             {return '<';}
-">"					            {return '>';}
-"!"					            {return '!';}
+">"                             {return '>';}
+"!"                             {return '!';}
 
 
-";"					            {return ';';}
-","					            {return ',';}
+";"                             {return ';';}
+","                             {return ',';}
 
 
 

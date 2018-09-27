@@ -31,11 +31,11 @@ expression:
 
 unary_expression: 
         '(' expression ')'
-    | 	'-' expression
-    | 	'!' expression
-    | 	location
-    | 	method_call
-    | 	literal
+    |   '-' expression
+    |   '!' expression
+    |   location
+    |   method_call
+    |   literal
 ;
 
 binary_expression:
