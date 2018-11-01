@@ -6,12 +6,25 @@ char        \\\"|\\'|\\n|\\t|\\\\|[^\\"']
 
 %{
 #include "parser.tab.h"
+// #define YY_DECL int yylex()
 int lineno = 0;
 %}
 
 %%
 "true"                          {return bool_literal;}
 "false"                         {return bool_literal;}
+
+"class"                         {return _class_;}
+"Program"                       {return _program_;}
+"int"                           {return _type_;}
+"boolean"                       {return _type_;}
+"void"                          {return _void_;}
+"if"                            {return _if_;}
+"else"                          {return _else_;}
+"for"                           {return _for_;}
+"return"                        {return _return_;}
+"break"                         {return _break_;}
+"continue"                      {return _continue_;}
 "callout"                       {return callout;}
 
 
@@ -34,7 +47,9 @@ int lineno = 0;
 "||"                            {return or_op;}
 
 
-
+"="                             {return eq;}
+"-="                            {return minus_eq;}
+"+="                            {return plus_eq;}
 
 
 "+"                             {return '+';}
