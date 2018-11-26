@@ -5,19 +5,28 @@ char        \\\"|\\'|\\n|\\t|\\\\|[^\\"']
 
 
 %{
+#include<Common.hpp>
+#include<string>
 #include "parser.tab.h"
-// #define YY_DECL int yylex()
+#define YY_DECL extern "C" int yylex()
+extern union Node yylval;
 int lineno = 0;
+
+void yyerror (char const *s){
+    // fl=1;
+    fprintf (stderr, "%s at statement -> %d\nNot parsed completely\n", s,yylineno);
+}
+
 %}
 
 %%
-"true"                          {return bool_literal;}
-"false"                         {return bool_literal;}
+"true"                          {yylval.boolean=true; return bool_literal;}
+"false"                         {yylval.boolean=false;return bool_literal;}
 
 "class"                         {return _class_;}
 "Program"                       {return _program_;}
-"int"                           {return _type_;}
-"boolean"                       {return _type_;}
+"int"                           {yylval.type = Int;return _type_;}
+"boolean"                       {yylval.type = Bool;return _type_;}
 "void"                          {return _void_;}
 "if"                            {return _if_;}
 "else"                          {return _else_;}
@@ -30,11 +39,11 @@ int lineno = 0;
 
 
 
-{alpha}({alpha}|{digit})*       {return id;}
-{digit}+                        {return decimal_literal;}
+{alpha}({alpha}|{digit})*       {yylval.string_lit = new std::string(yytext);return id;}
+{digit}+                        {yylval.number = std::stoi(yytext);return decimal_literal;}
 0x{hex_digit}+                  {return hex_literal;}
-'{char}'                        {return char_literal;}
-\"{char}*\"                     {return string_literal;}
+'{char}'                        {yylval.number = yytext[0];return char_literal;}
+\"{char}*\"                     {yylval.string_lit = new std::string(yytext+1);yylval.string_lit->pop_back();return string_literal;}
 
 
 "<="                            {return le_eq_op;}
