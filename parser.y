@@ -2,12 +2,14 @@
     #include <stdio.h>
     #include<iostream>
     #include<Common.hpp>
+    #include<LLVMIRGenerator.hpp>
     extern "C" int yylex();
     extern "C" int yyparse();
     extern "C" FILE *yyin;
     extern "C" int line_num;
     extern union Node yylval;
     extern "C" int errors;
+    Program* program = nullptr;
     void yyerror(const char *s);
 %}
 
@@ -77,13 +79,13 @@
 
 PROGRAM:
         _class_ _program_ '{' field_declaration_list method_declaration_list '}'
-            {$$ = new Program($4,$5);}
+            {$$ = new Program($4,$5);program=$$;}
     |   _class_ _program_ '{' method_declaration_list '}'
-            {$$ = new Program(nullptr,$4);}
+            {$$ = new Program(new FieldDeclarationList(),$4);program=$$;}
     |   _class_ _program_ '{' field_declaration_list '}'
-            {$$ = new Program($4,nullptr);}
+            {$$ = new Program($4,new MethodDeclarationList());program=$$;}
     |   _class_ _program_ '{'  '}'
-            {$$ = new Program(nullptr,nullptr);}
+            {$$ = new Program(new FieldDeclarationList(),new MethodDeclarationList);program=$$;}
 ;
 
 
@@ -353,6 +355,14 @@ int main(int argc, char **argv)
 {
     yyparse();
     // printf("Parsing Over\n");
+    LLVMIRGenerator* generator = new LLVMIRGenerator();
+    if(program==nullptr){
+            std::cout<<"wrong"<<std::endl;
+    }else{
+            std::cout<<"right"<<std::endl;
+
+    }
+    generator->visit(program);
     std::cout<<"Parsing Over\n";
 }
 

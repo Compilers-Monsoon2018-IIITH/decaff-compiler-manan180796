@@ -438,7 +438,6 @@ void LLVMIRGenerator::visit(VariableDeclaration* variable_declaration) {
     return_value = ConstantInt::get(context, APInt(32, 1));
     return;
 }
-
 void LLVMIRGenerator::visit(
     VariableDeclarationList* variable_declaration_list) {
     Value* v = ConstantInt::get(context, APInt(32, 1));
@@ -452,7 +451,6 @@ void LLVMIRGenerator::visit(
     return_value = v;
     return;
 }
-
 void LLVMIRGenerator::visit(IdList* id_list) {}
 
 void LLVMIRGenerator::visit(Block* block) {
@@ -472,9 +470,8 @@ void LLVMIRGenerator::visit(Block* block) {
         }
     }
 }
-
 void LLVMIRGenerator::visit(AssignmentStatement* assignment_statement) {
-    Value* cur = named_values[assignment_statement->location->var_name].top;
+    Value* cur = named_values[assignment_statement->location->var_name].top();
     if (cur == nullptr) {
         cur =
             module->getGlobalVariable(assignment_statement->location->var_name);
@@ -508,8 +505,198 @@ void LLVMIRGenerator::visit(AssignmentStatement* assignment_statement) {
     return_value = this->builder.CreateStore(val, lhs);
     return;
 }
-
 void LLVMIRGenerator::visit(ExpressionList* e) {}
+
+void LLVMIRGenerator::visit(MethodDeclaration* method_declaration) {
+    // std::cout << "done" << std::endl;
+    std::vector<std::string> argNames;
+    std::vector<Types> argTypes;
+    std::vector<ArgumentDeclaration*> args =
+        method_declaration->arg_list->arg_list;
+    std::vector<Type*> arguments;
+    auto arg_size = args.size();
+    for (auto& arg : args) {
+        /* Iterate over the arguments and get the types of them in llvm */
+        std::string arg_name = arg->arg_name;
+        Types arg_type = arg->type;
+        switch (arg->type) {
+            case Int: {
+                arguments.push_back(Type::getInt32Ty(context));
+            } break;
+            case Bool: {
+                arguments.push_back(Type::getInt1Ty(context));
+            } break;
+            default: {
+                LogError("Arguments can only be int or boolean");
+                return_function = nullptr;
+                return;
+            } break;
+        }
+        argTypes.push_back(arg_type);
+        argNames.push_back(arg_name);
+    }
+
+    Type* returnType;
+    /* Get the return Type */
+
+    switch (method_declaration->return_type) {
+        case Int: {
+            returnType = Type::getInt32Ty(context);
+        } break;
+        case Bool: {
+            returnType = Type::getInt1Ty(context);
+        } break;
+        case Void: {
+            returnType = Type::getVoidTy(context);
+        } break;
+    }
+
+    /* Get the function type and create a Function */
+    FunctionType* function_type =
+        llvm::FunctionType::get(returnType, arguments, false);
+    Function* function =
+        llvm::Function::Create(function_type, Function::ExternalLinkage,
+                               method_declaration->name, module);
+
+    /* Iterate through arguments and set the Names for them */
+
+    unsigned Idx = 0;
+    for (Function::arg_iterator AI = function->arg_begin(); Idx != arg_size;
+         ++AI, ++Idx) {
+        AI->setName(argNames[Idx]);
+    }
+
+    /* Create a New block for this Function */
+    BasicBlock* BB = BasicBlock::Create(context, "entry", function);
+    builder.SetInsertPoint(BB);
+    Idx = 0;
+
+    /* Allocate memory for the arguments passed */
+    name_stack.push(std::set<std::string>());
+    for (auto& Arg : function->args()) {
+        AllocaInst* alloca = nullptr;
+        switch (argTypes[Idx]) {
+            case Int: {
+                alloca = CreateEntryBlockAlloca(function, argNames[Idx], "int");
+            } break;
+            case Bool: {
+                alloca =
+                    CreateEntryBlockAlloca(function, argNames[Idx], "boolean");
+            } break;
+        }
+        builder.CreateStore(&Arg, alloca);
+        if (named_values.find(argNames[Idx]) == named_values.end()) {
+            named_values[argNames[Idx]] = std::stack<AllocaInst*>();
+        }
+        named_values[argNames[Idx]].push(alloca);
+        name_stack.top().insert(argNames[Idx]);
+        Idx++;
+    }
+
+    method_declaration->accept(this);
+    if (return_value) {
+        /* make this the return value */
+        if (method_declaration->return_type != Void)
+            builder.CreateRet(return_value);
+        else
+            builder.CreateRetVoid();
+        /// Iterate through each basic block in this function and remove any
+        /// dead code
+        // for (auto& basicBlock : *function) {
+        //     BasicBlock* block = &basicBlock;
+        //     removeDeadCode(block);
+        // }
+        /* Verify the function */
+        // verifyFunction(*function);
+        // TheFPM->run(*function);
+        return_function = function;
+        return;
+    }
+
+    /* In case of errors remove the function */
+    function->eraseFromParent();
+    return_function = nullptr;
+    return;
+}
+
+void LLVMIRGenerator::visit(MethodStatement* method_statement) {
+    method_statement->call->accept(this);
+}
+
+void LLVMIRGenerator::visit(ArgumentDeclaration* argument_declaration) {}
+void LLVMIRGenerator::visit(
+    ArgumentDeclarationList* argument_declaration_list) {}
+
+void LLVMIRGenerator::visit(FieldDeclaration* field_declaration) {
+    llvm::Type* ty = nullptr;
+    switch (field_declaration->type) {
+        case Int: {
+            ty = Type::getInt32Ty(context);
+        } break;
+        case Bool: {
+            ty = Type::getInt1Ty(context);
+        } break;
+    }
+
+    for (auto var : field_declaration->field_list->field_list) {
+        /* Allocate one location of global variable for all */
+        if (var->size != nullptr) {
+            ArrayType* arrType = ArrayType::get(ty, var->size->data);
+            GlobalVariable* gv = new GlobalVariable(
+                *(module), arrType, false, GlobalValue::ExternalLinkage,
+                nullptr, var->name);
+            gv->setInitializer(ConstantAggregateZero::get(arrType));
+        } else {
+            GlobalVariable* gv = new GlobalVariable(
+                *(module), ty, false, GlobalValue::ExternalLinkage, nullptr,
+                var->name);
+            gv->setInitializer(Constant::getNullValue(ty));
+        }
+    }
+    return_value = ConstantInt::get(context, APInt(32, 1));
+    return;
+}
+
+void LLVMIRGenerator::visit(Field* f) {}
+void LLVMIRGenerator::visit(FieldList* f) {}
+void LLVMIRGenerator::visit(FieldDeclarationList* field_declaration_list) {
+    for (auto& i : field_declaration_list->decl_list) {
+        i->accept(this);
+    }
+    return_value = ConstantInt::get(context, APInt(32, 1));
+    return;
+}
+
+void LLVMIRGenerator::visit(MethodDeclarationList* method_declaration_list) {
+    std::cout << method_declaration_list->decl_list.size() << std::endl;
+    Value* V = ConstantInt::get(context, APInt(32, 0));
+    for (auto& i : method_declaration_list->decl_list) {
+        LogError("df");
+        i->accept(this);
+        V = return_value;
+        if (return_value == nullptr) return;
+    }
+    return;
+}
+
+void LLVMIRGenerator::visit(Program* program) {
+    Value* V;
+    // Generate code for field Declarations
+    program->field_list->accept(this);
+    V = return_value;
+    if (V == nullptr) {
+        LogError("Invalid field Declarations");
+        return;
+    }
+    // Generate the code for method Declarations
+    program->method_list->accept(this);
+    V = return_value;
+    if (V == nullptr) {
+        LogError("Invalid method Declarations");
+        return;
+    }
+    return;
+}
 
 
 #endif  // LLVMIRGenerator_cpp

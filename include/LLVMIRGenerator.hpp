@@ -49,20 +49,13 @@ class LLVMIRGenerator : public Visitor {
 
     void LogError(std::string error_message);
 
-    virtual void visit(ArgumentDeclaration* argument_declaration) override;
-    virtual void visit(
-        ArgumentDeclarationList* argument_declaration_list) override;
-    virtual void visit(Field* field) override;
-    virtual void visit(FieldDeclaration* field_declaration) override;
-    virtual void visit(FieldDeclarationList* field_declaration_list) override;
-    virtual void visit(FieldList* field_list) override;
-    virtual void visit(MethodDeclaration* method_declaration) override;
-    virtual void visit(MethodDeclarationList* method_declaration_list) override;
-    virtual void visit(MethodStatement* method_statement) override;
     virtual void visit(Program* program) override;
 
 
     // Implemented
+    virtual void visit(ArgumentDeclaration* argument_declaration) override;
+    virtual void visit(
+        ArgumentDeclarationList* argument_declaration_list) override;
     virtual void visit(AssignmentStatement* assignment_statement) override;
     virtual void visit(AstNode* ast_node) override;
     virtual void visit(BinaryExpression* binary_expression) override;
@@ -76,6 +69,10 @@ class LLVMIRGenerator : public Visitor {
     virtual void visit(ContinueStatement* continue_statement) override;
     virtual void visit(Expression* expression) override;
     virtual void visit(ExpressionList* expression_list) override;
+    virtual void visit(Field* field) override;
+    virtual void visit(FieldDeclaration* field_declaration) override;
+    virtual void visit(FieldDeclarationList* field_declaration_list) override;
+    virtual void visit(FieldList* field_list) override;
     virtual void visit(ForStatement* for_statement) override;
     virtual void visit(IdList* id_list) override;
     virtual void visit(IfStatement* if_statement) override;
@@ -83,6 +80,9 @@ class LLVMIRGenerator : public Visitor {
     virtual void visit(Literal* literal) override;
     virtual void visit(Location* location) override;
     virtual void visit(MethodCall* method_call) override;
+    virtual void visit(MethodDeclaration* method_declaration) override;
+    virtual void visit(MethodDeclarationList* method_declaration_list) override;
+    virtual void visit(MethodStatement* method_statement) override;
     virtual void visit(NestedUnaryExpression* nested_unary_expression) override;
     virtual void visit(ReturnStatement* return_statement) override;
     virtual void visit(SimpleMethod* simple_method) override;
