@@ -13,6 +13,7 @@ class CalloutArg : public AstNode {
     CalloutArg(Expression* argument);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     CalloutArg(std::string str_arg);
+    friend class LLVMIRGenerator;
 };
 
 #endif  // CalloutArg_hpp

@@ -16,6 +16,7 @@ class FieldDeclarationList : public AstNode {
     void AddDeclaration(FieldDeclaration* decl);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~FieldDeclarationList();
+    friend class LLVMIRGenerator;
 };
 
 

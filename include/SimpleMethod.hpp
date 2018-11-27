@@ -12,7 +12,8 @@ class SimpleMethod : public MethodCall {
 
   public:
     SimpleMethod(std::string name, ExpressionList* argument_list = nullptr);
-    virtual void accept(Visitor* visitor) {visitor->visit(this);}
+    virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    friend class LLVMIRGenerator;
 };
 
 #endif

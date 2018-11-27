@@ -16,6 +16,7 @@ class Program : public AstNode {
             MethodDeclarationList* method_list);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~Program();
+    friend class LLVMIRGenerator;
 };
 
 

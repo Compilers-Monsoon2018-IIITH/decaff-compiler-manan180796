@@ -16,6 +16,7 @@ class Block : public Statement {
     Block(VariableDeclarationList* var_list, StatementList* statement_list);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~Block();
+    friend class LLVMIRGenerator;
 };
 
 

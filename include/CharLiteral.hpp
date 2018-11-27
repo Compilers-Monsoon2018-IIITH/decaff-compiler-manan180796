@@ -9,6 +9,7 @@ class CharLiteral : public Literal {
   public:
     CharLiteral(char data);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    friend class LLVMIRGenerator;
 };
 
 #endif

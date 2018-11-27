@@ -12,6 +12,7 @@ class BreakStatement : public Statement {
     BreakStatement(/* args */);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~BreakStatement();
+    friend class LLVMIRGenerator;
 };
 
 

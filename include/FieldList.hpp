@@ -13,8 +13,9 @@ class FieldList : public AstNode {
   public:
     FieldList(/* args */);
     void AddField(Field *field);
-    virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    virtual void accept(Visitor *visitor) { visitor->visit(this); }
     ~FieldList();
+    friend class LLVMIRGenerator;
 };
 
 

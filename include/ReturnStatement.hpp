@@ -12,8 +12,9 @@ class ReturnStatement : public Statement {
 
   public:
     ReturnStatement(Expression* expression = nullptr);
-    virtual void accept(Visitor* visitor) {visitor->visit(this);}
+    virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~ReturnStatement();
+    friend class LLVMIRGenerator;
 };
 
 

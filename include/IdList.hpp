@@ -15,6 +15,7 @@ class IdList {
     void AddId(std::string id);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~IdList();
+    friend class LLVMIRGenerator;
 };
 
 

@@ -10,8 +10,10 @@ class NestedUnaryExpression : public UnaryExpression {
 
   public:
     NestedUnaryExpression(Expression* exp);
-    virtual void accept(Visitor* visitor) {visitor->visit(this);}
+    virtual bool IsLocation() override;
+    virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~NestedUnaryExpression();
+    friend class LLVMIRGenerator;
 };
 
 

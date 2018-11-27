@@ -14,8 +14,9 @@ class StatementList : public AstNode {
   public:
     StatementList();
     void AddStatement(Statement* statement);
-    virtual void accept(Visitor* visitor) {visitor->visit(this);}
+    virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~StatementList();
+    friend class LLVMIRGenerator;
 };
 
 

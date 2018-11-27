@@ -3,6 +3,8 @@
 
 #include <Expression.hpp>
 
-class UnaryExpression : public Expression {};
+class UnaryExpression : public Expression {
+    friend class LLVMIRGenerator;
+};
 
 #endif

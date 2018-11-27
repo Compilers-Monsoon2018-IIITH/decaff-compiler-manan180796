@@ -19,6 +19,7 @@ class ForStatement : public Statement {
                  Block* block);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~ForStatement();
+    friend class LLVMIRGenerator;
 };
 
 

@@ -14,6 +14,7 @@ class BinaryExpression : public Expression {
     BinaryExpression(Expression *left_operand, std::string op,
                      Expression *right_operand);
     virtual void accept(Visitor *visitor) { visitor->visit(this); }
+    friend class LLVMIRGenerator;
 };
 
 #endif  // BinaryExpression_hpp

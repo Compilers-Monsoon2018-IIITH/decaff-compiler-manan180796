@@ -17,6 +17,7 @@ class IfStatement : public Statement {
     IfStatement(Expression* exp, Block* if_block, Block* else_block = nullptr);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~IfStatement();
+    friend class LLVMIRGenerator;
 };
 
 

@@ -6,6 +6,7 @@
 class MethodCall : public UnaryExpression {
   public:
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    friend class LLVMIRGenerator;
 };
 
 #endif

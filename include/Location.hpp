@@ -10,7 +10,9 @@ class Location : public UnaryExpression {
 
   public:
     Location(std::string var_name, Expression *index = nullptr);
-    virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    virtual void accept(Visitor *visitor) { visitor->visit(this); }
+    virtual bool IsLocation() override;
+    friend class LLVMIRGenerator;
 };
 
 #endif

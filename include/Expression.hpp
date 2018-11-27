@@ -4,8 +4,11 @@
 #include <AstNode.hpp>
 
 class Expression : public AstNode {
+  protected:
   public:
-    virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    virtual bool IsLocation();
+    virtual void accept(Visitor* visitor);
+    friend class LLVMIRGenerator;
 };
 
 

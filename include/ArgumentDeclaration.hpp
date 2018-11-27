@@ -15,6 +15,7 @@ class ArgumentDeclaration : public AstNode {
     ArgumentDeclaration(Types type, std::string arg_name);
     ~ArgumentDeclaration();
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    friend class LLVMIRGenerator;
 };
 
 

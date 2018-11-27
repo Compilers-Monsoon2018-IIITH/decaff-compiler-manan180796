@@ -7,7 +7,7 @@ char        \\\"|\\'|\\n|\\t|\\\\|[^\\"']
 %{
 #include<Common.hpp>
 #include<string>
-#include "parser.tab.h"
+#include <parser.tab.h>
 #define YY_DECL extern "C" int yylex()
 extern union Node yylval;
 int lineno = 0;

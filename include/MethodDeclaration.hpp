@@ -21,6 +21,7 @@ class MethodDeclaration : public AstNode {
                       ArgumentDeclarationList* arg_list, Block* body);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~MethodDeclaration();
+    friend class LLVMIRGenerator;
 };
 
 

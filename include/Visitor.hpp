@@ -14,7 +14,7 @@ class Visitor {
     virtual void visit(class BreakStatement* break_statement) {}
     virtual void visit(class CalloutArg* callout_arg) {}
     virtual void visit(class CalloutArgList* callout_arg_list) {}
-    virtual void visit(class CalloutArgMethod* callout_method) {}
+    virtual void visit(class CalloutMethod* callout_method) {}
     virtual void visit(class CharLiteral* char_literal) {}
     virtual void visit(class ContinueStatement* continue_statement) {}
     virtual void visit(class Expression* expression) {}

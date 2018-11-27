@@ -7,15 +7,16 @@
 #include <string>
 
 class AssignmentStatement : public Statement {
-  private:
+  public:
     Location* location;
     std::string assignment_op;
     Expression* expression;
 
-  public:
+
     AssignmentStatement(Location* location, std::string assignment_op,
                         Expression* expression);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    friend class LLVMIRGenerator;
 };
 
 #endif  // AssignmentStatement_hpp

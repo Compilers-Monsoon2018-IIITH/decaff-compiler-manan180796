@@ -12,6 +12,7 @@ class ContinueStatement : public Statement {
     ContinueStatement(/* args */);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~ContinueStatement();
+    friend class LLVMIRGenerator;
 };
 
 

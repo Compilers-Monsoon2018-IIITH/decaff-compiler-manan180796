@@ -8,8 +8,10 @@ class ExpressionList : public AstNode {
 
   public:
     ExpressionList();
-    virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    virtual void accept(Visitor* visitor);
     void AddExpression(Expression* expression);
+    std::vector<Expression*> GetList();
+    friend class LLVMIRGenerator;
 };
 
 #endif

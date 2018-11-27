@@ -13,6 +13,7 @@ class CalloutArgList : public AstNode {
     CalloutArgList();
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     void AddArgument(CalloutArg* argument);
+    friend class LLVMIRGenerator;
 };
 
 

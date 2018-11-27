@@ -13,7 +13,8 @@ class MethodStatement : public Statement {
   public:
     MethodStatement(MethodCall* call);
     ~MethodStatement();
-    virtual void accept(Visitor* visitor) {visitor->visit(this);}
+    virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    friend class LLVMIRGenerator;
 };
 
 

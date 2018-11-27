@@ -6,5 +6,6 @@
 
 Location::Location(std::string var_name, Expression *index)
     : var_name(var_name), index(index) {}
+bool Location::IsLocation() { return index == nullptr; }
 
 #endif  // Location_cpp

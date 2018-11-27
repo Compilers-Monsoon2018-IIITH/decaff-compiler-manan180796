@@ -15,6 +15,7 @@ class Field : public AstNode {
     Field(std::string name, IntLiteral* size = nullptr);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~Field();
+    friend class LLVMIRGenerator;
 };
 
 

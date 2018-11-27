@@ -13,8 +13,9 @@ class VariableDeclarationList : public AstNode {
   public:
     VariableDeclarationList();
     void AddDeclaration(VariableDeclaration* declaration);
-    virtual void accept(Visitor* visitor) {visitor->visit(this);}
+    virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~VariableDeclarationList();
+    friend class LLVMIRGenerator;
 };
 
 

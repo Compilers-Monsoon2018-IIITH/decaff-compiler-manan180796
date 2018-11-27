@@ -12,8 +12,9 @@ class UnaryOperation : public UnaryExpression {
 
   public:
     UnaryOperation(std::string op, Expression* exp);
-    virtual void accept(Visitor* visitor) {visitor->visit(this);}
+    virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~UnaryOperation();
+    friend class LLVMIRGenerator;
 };
 
 

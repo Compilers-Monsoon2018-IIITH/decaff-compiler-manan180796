@@ -15,7 +15,8 @@ class VariableDeclaration {
   public:
     VariableDeclaration(Types type, IdList* id_list);
     ~VariableDeclaration();
-    virtual void accept(Visitor* visitor) {visitor->visit(this);}
+    virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    friend class LLVMIRGenerator;
 };
 
 

@@ -15,6 +15,7 @@ class ArgumentDeclarationList : public AstNode {
     void AddArgument(ArgumentDeclaration* arg);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~ArgumentDeclarationList();
+    friend class LLVMIRGenerator;
 };
 
 

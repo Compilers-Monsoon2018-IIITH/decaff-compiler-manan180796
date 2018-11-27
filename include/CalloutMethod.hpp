@@ -14,6 +14,7 @@ class CalloutMethod : public MethodCall {
     CalloutMethod(std::string method_name, CalloutArgList* arg_list = nullptr);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
     ~CalloutMethod();
+    friend class LLVMIRGenerator;
 };
 
 #endif  // CalloutMethod_hpp

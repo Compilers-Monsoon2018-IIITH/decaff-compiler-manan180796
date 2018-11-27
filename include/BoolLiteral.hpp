@@ -10,6 +10,7 @@ class BoolLiteral : public Literal {
   public:
     BoolLiteral(bool data);
     virtual void accept(Visitor* visitor) { visitor->visit(this); }
+    friend class LLVMIRGenerator;
 };
 
 #endif  // BoolLiteral_hpp
