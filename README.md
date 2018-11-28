@@ -7,4 +7,4 @@ Run `make`
 
 ## Parsing Expressions
 
-Run `./parser` and input the expression into the stdin
+Run `./bin/decafCompiler` and input the expression into the stdin
