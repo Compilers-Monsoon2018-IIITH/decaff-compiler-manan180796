@@ -1,21 +1,30 @@
 #if !defined(LLVMIRGenerator_cpp)
 #define LLVMIRGenerator_cpp
 
+#include <llvm/Support/raw_ostream.h>
 #include <LLVMIRGenerator.hpp>
+#include <Printer.hpp>
 #include <iostream>
 #include <vector>
+
 
 LLVMIRGenerator::LLVMIRGenerator()
     : context(),
       builder(context),
-      module(new Module("Decaf compiler", context)) {}
+      module(new Module("Decaf compiler", context)),
+      error(0),
+      debug(false) {}
 
 LLVMIRGenerator::~LLVMIRGenerator() {}
 
 void LLVMIRGenerator::LogError(std::string error_message) {
     std::cerr << error_message << std::endl;
-    return_value = nullptr;
+    ++error;
 }
+void LLVMIRGenerator::LogDebugger(std::string debug_message) {
+    if (debug) std::cerr << debug_message << std::endl;
+}
+
 
 AllocaInst* LLVMIRGenerator::CreateEntryBlockAlloca(Function* function,
                                                     std::string variable_name,
@@ -40,6 +49,7 @@ void LLVMIRGenerator::visit(IntLiteral* int_literal) {
 }
 void LLVMIRGenerator::visit(BoolLiteral* bool_literal) {
     return_value = ConstantInt::get(context, APInt(1, bool_literal->data));
+    // std::cout << "BoolLiteral" << std::endl;
 }
 void LLVMIRGenerator::visit(CharLiteral* char_literal) {
     return_value = ConstantInt::get(context, APInt(32, char_literal->data));
@@ -52,13 +62,21 @@ void LLVMIRGenerator::visit(UnaryExpression* unary_expression) {
 void LLVMIRGenerator::visit(Statement* statement) { statement->accept(this); }
 
 void LLVMIRGenerator::visit(BinaryExpression* binary_expression) {
+    LogDebugger("Binary Expression");
     binary_expression->left_operand->accept(this);
+    if (return_value == nullptr) {
+        return;
+    }
     Value* left_operand = return_value;
     if (binary_expression->left_operand->IsLocation()) {
         left_operand = builder.CreateLoad(left_operand);
     }
 
+
     binary_expression->right_operand->accept(this);
+    if (return_value == nullptr) {
+        return;
+    }
     Value* right_operand = return_value;
     if (binary_expression->right_operand->IsLocation()) {
         right_operand = builder.CreateLoad(right_operand);
@@ -67,7 +85,6 @@ void LLVMIRGenerator::visit(BinaryExpression* binary_expression) {
 
     std::string op = binary_expression->op;
     return_value = nullptr;
-    if (left_operand == nullptr || right_operand == nullptr) return;
 
     if (op == "+") {
         return_value = builder.CreateAdd(left_operand, right_operand, "addtmp");
@@ -96,15 +113,26 @@ void LLVMIRGenerator::visit(BinaryExpression* binary_expression) {
     } else if (op == "==") {
         return_value = builder.CreateICmpEQ(left_operand, right_operand,
                                             "equalcomparetmp");
+
     } else if (op == "!=") {
         return_value = builder.CreateICmpNE(left_operand, right_operand,
                                             "notequalcomparetmp");
+    } else if (op == "||") {
+        return_value = builder.CreateOr(left_operand, right_operand, "ortmp");
+    } else if (op == "&&") {
+        return_value = builder.CreateAnd(left_operand, right_operand, "andtmp");
     } else {
         LogError("invalid binary operation: " + op);
+        return_value = nullptr;
     }
+    LogDebugger("Binary Expression Ended");
 }
 void LLVMIRGenerator::visit(Location* location) {
-    Value* name = named_values[location->var_name].top();
+    LogDebugger("Location");
+    Value* name = nullptr;
+    if (named_values.find(location->var_name) != named_values.end()) {
+        name = named_values[location->var_name].top();
+    }
     if (name == nullptr) {
         name = module->getNamedGlobal(location->var_name);
     }
@@ -135,10 +163,15 @@ void LLVMIRGenerator::visit(Location* location) {
     array_index.push_back(index);
     return_value =
         builder.CreateGEP(name, array_index, location->var_name + "_Index");
+    LogDebugger("Location Ended");
     return;
 }
 void LLVMIRGenerator::visit(UnaryOperation* unary_operation) {
+    LogDebugger("Unary Operation");
     unary_operation->exp->accept(this);
+    if (return_value == nullptr) {
+        return;
+    }
     Value* expr = return_value;
     if (unary_operation->exp->IsLocation()) {
         expr = builder.CreateLoad(expr);
@@ -148,16 +181,24 @@ void LLVMIRGenerator::visit(UnaryOperation* unary_operation) {
     } else if (unary_operation->op == "!") {
         return_value = builder.CreateNot(expr, "nottmp");
     } else {
+        return_value = nullptr;
         LogError("Unidentified unary operator: " + unary_operation->op);
     }
-    return;
+    LogDebugger("Unary Operation Ended");
 }
 void LLVMIRGenerator::visit(NestedUnaryExpression* nested_unary_expression) {
+    LogDebugger("Nested Unary Expression");
     nested_unary_expression->exp->accept(this);
+    LogDebugger("Nested Unary Expression Ended");
 }
 void LLVMIRGenerator::visit(SimpleMethod* simple_method) {
+    Debug();
+    LogDebugger("Simple Method");
     std::string name = simple_method->method_name;
-    std::vector<Expression*> arg_list = simple_method->argument_list->GetList();
+    if (simple_method->argument_list == nullptr) {
+        LogDebugger("Debug");
+    }
+    std::vector<Expression*> arg_list = simple_method->argument_list->exp_list;
     Function* callee = module->getFunction(name);
     if (callee == nullptr) {
         return_value = nullptr;
@@ -185,6 +226,8 @@ void LLVMIRGenerator::visit(SimpleMethod* simple_method) {
     }
 
     return_value = builder.CreateCall(callee, args);
+    LogDebugger("Simple Method Ends");
+    NotDebug();
     return;
 }
 void LLVMIRGenerator::visit(CalloutMethod* callout_method) {
@@ -210,11 +253,14 @@ void LLVMIRGenerator::visit(CalloutMethod* callout_method) {
     Constant* func = module->getOrInsertFunction(name, FType);
     if (!func) {
         LogError("Error in inbuilt function. Unknown Function name " + name);
+        return_value = nullptr;
+        return;
     }
     return_value = builder.CreateCall(func, funcargs);
     return;
 }
 void LLVMIRGenerator::visit(CalloutArg* callout_arg) {
+    LogDebugger("Callout Arg");
     if (callout_arg->argument != nullptr) {
         callout_arg->argument->accept(this);
         Value* arg = return_value;
@@ -232,14 +278,22 @@ void LLVMIRGenerator::visit(CalloutArg* callout_arg) {
         return;
     }
 }
-void LLVMIRGenerator::visit(CalloutArgList* callout_arg_list) {}
+void LLVMIRGenerator::visit(CalloutArgList* callout_arg_list) {
+    LogDebugger("Callout Argument List");
+}
 
-void LLVMIRGenerator::visit(AstNode* ast_node) { ast_node->accept(this); }
+void LLVMIRGenerator::visit(AstNode* ast_node) {
+    LogDebugger("Ast Node");
+    ast_node->accept(this);
+}
+
 
 void LLVMIRGenerator::visit(Expression* expression) {
+    LogDebugger("Expression");
     expression->accept(this);
 }
 void LLVMIRGenerator::visit(ReturnStatement* return_statement) {
+    LogDebugger("Return Statement");
     if (return_statement->expression != nullptr) {
         return_statement->expression->accept(this);
         Value* v = return_value;
@@ -254,6 +308,8 @@ void LLVMIRGenerator::visit(ReturnStatement* return_statement) {
     }
 }
 void LLVMIRGenerator::visit(IfStatement* if_statement) {
+    // if_statement->exp->accept(new Printer());
+    LogDebugger("If Statement");
     if_statement->exp->accept(this);
     Value* expr = return_value;
     if (if_statement->exp->IsLocation()) {
@@ -269,8 +325,9 @@ void LLVMIRGenerator::visit(IfStatement* if_statement) {
     BasicBlock* else_block = BasicBlock::Create(context, "else");
     BasicBlock* merge_block = BasicBlock::Create(context, "merge");
 
-    expr = builder.CreateFCmpONE(expr, ConstantFP::get(context, APFloat(0.0)),
-                                 "ifcond");
+    // expr = builder.CreateFCmpONE(expr, ConstantInt::get(context, APInt(32,
+    // 0)),
+    //                              "ifcond");
     if (if_statement->else_block != nullptr) {
         builder.CreateCondBr(expr, if_block, else_block);
         builder.SetInsertPoint(if_block);
@@ -296,12 +353,7 @@ void LLVMIRGenerator::visit(IfStatement* if_statement) {
 
         cur_funtion->getBasicBlockList().push_back(merge_block);
         builder.SetInsertPoint(merge_block);
-
-        PHINode* PN = builder.CreatePHI(Type::getDoubleTy(context), 2, "iftmp");
-        PN->addIncoming(if_processed, if_block);
-        PN->addIncoming(else_processed, else_block);
-        return_value = PN;
-        return;
+        return_value = ConstantInt::get(context, APInt(32, 0));
     } else {
         builder.CreateCondBr(expr, if_block, merge_block);
         builder.SetInsertPoint(if_block);
@@ -317,7 +369,6 @@ void LLVMIRGenerator::visit(IfStatement* if_statement) {
         cur_funtion->getBasicBlockList().push_back(merge_block);
         builder.SetInsertPoint(merge_block);
         return_value = ConstantInt::get(context, APInt(32, 0));
-        return;
     }
 }
 void LLVMIRGenerator::visit(ForStatement* for_statement) {
@@ -325,6 +376,7 @@ void LLVMIRGenerator::visit(ForStatement* for_statement) {
     Value* start = return_value;
     if (start == nullptr) {
         return_value = nullptr;
+        LogError("Bad loop initialization");
         return;
     }
     if (for_statement->start->IsLocation()) {
@@ -345,6 +397,7 @@ void LLVMIRGenerator::visit(ForStatement* for_statement) {
     builder.CreateBr(loop_body);
     builder.SetInsertPoint(loop_body);
 
+
     PHINode* Variable = builder.CreatePHI(Type::getInt32Ty(context), 2,
                                           for_statement->variable_name);
     Variable->addIncoming(start, pre_header_basic_block);
@@ -363,6 +416,9 @@ void LLVMIRGenerator::visit(ForStatement* for_statement) {
     }
     loop_stack.push(new Loop(afterBB, loop_body, end,
                              for_statement->variable_name, Variable));
+    if (named_values.find(for_statement->variable_name) == named_values.end()) {
+        named_values[for_statement->variable_name] = std::stack<AllocaInst*>();
+    }
     named_values[for_statement->variable_name].push(alloca);
     /* Generate the code for the body */
     for_statement->block->accept(this);
@@ -373,13 +429,16 @@ void LLVMIRGenerator::visit(ForStatement* for_statement) {
     }
 
     Value* cur = builder.CreateLoad(alloca, for_statement->variable_name);
+    cur = builder.CreateIntCast(cur, step_val->getType(), true);
     Value* next_val = builder.CreateAdd(cur, step_val, "NextVal");
     builder.CreateStore(next_val, alloca);
+    end = builder.CreateIntCast(end, step_val->getType(), true);
     end = builder.CreateICmpSLT(next_val, end, "loopcondition");
     BasicBlock* loopEndBlock = builder.GetInsertBlock();
     builder.CreateCondBr(end, loop_body, afterBB);
     builder.SetInsertPoint(afterBB);
     Variable->addIncoming(next_val, loopEndBlock);
+    loop_stack.pop();
     named_values[for_statement->variable_name].pop();
     if (named_values[for_statement->variable_name].empty()) {
         named_values.erase(for_statement->variable_name);
@@ -389,6 +448,11 @@ void LLVMIRGenerator::visit(ForStatement* for_statement) {
 }
 void LLVMIRGenerator::visit(ContinueStatement* continue_statement) {
     llvm::Value* V = llvm::ConstantInt::get(context, llvm::APInt(32, 1));
+    if (loop_stack.empty()) {
+        return_value = nullptr;
+        LogError("continue statement must be in a loop");
+        return;
+    }
     Loop* current_loop = loop_stack.top();
     Expression* condition = nullptr;
     std::string loop_var = current_loop->loop_variable;
@@ -407,6 +471,11 @@ void LLVMIRGenerator::visit(ContinueStatement* continue_statement) {
 }
 void LLVMIRGenerator::visit(BreakStatement* break_statement) {
     return_value = llvm::ConstantInt::get(context, llvm::APInt(32, 1));
+    if (loop_stack.empty()) {
+        return_value = nullptr;
+        LogError("break statement must be in a loop");
+        return;
+    }
     Loop* currentLoop = loop_stack.top();
     builder.CreateBr(currentLoop->after_basic_block);
     return;
@@ -470,6 +539,17 @@ void LLVMIRGenerator::visit(Block* block) {
         }
     }
 }
+
+void LLVMIRGenerator::visit(StatementList* statement_list) {
+    Value* v = ConstantInt::get(context, llvm::APInt(32, 1));
+    for (auto& stmt : statement_list->statements) {
+        stmt->accept(this);
+        v = return_value;
+    }
+    return_value = v;
+    return;
+}
+
 void LLVMIRGenerator::visit(AssignmentStatement* assignment_statement) {
     Value* cur = named_values[assignment_statement->location->var_name].top();
     if (cur == nullptr) {
@@ -508,7 +588,6 @@ void LLVMIRGenerator::visit(AssignmentStatement* assignment_statement) {
 void LLVMIRGenerator::visit(ExpressionList* e) {}
 
 void LLVMIRGenerator::visit(MethodDeclaration* method_declaration) {
-    // std::cout << "done" << std::endl;
     std::vector<std::string> argNames;
     std::vector<Types> argTypes;
     std::vector<ArgumentDeclaration*> args =
@@ -593,7 +672,7 @@ void LLVMIRGenerator::visit(MethodDeclaration* method_declaration) {
         Idx++;
     }
 
-    method_declaration->accept(this);
+    method_declaration->body->accept(this);
     if (return_value) {
         /* make this the return value */
         if (method_declaration->return_type != Void)
@@ -668,10 +747,8 @@ void LLVMIRGenerator::visit(FieldDeclarationList* field_declaration_list) {
 }
 
 void LLVMIRGenerator::visit(MethodDeclarationList* method_declaration_list) {
-    std::cout << method_declaration_list->decl_list.size() << std::endl;
     Value* V = ConstantInt::get(context, APInt(32, 0));
     for (auto& i : method_declaration_list->decl_list) {
-        LogError("df");
         i->accept(this);
         V = return_value;
         if (return_value == nullptr) return;
@@ -686,17 +763,27 @@ void LLVMIRGenerator::visit(Program* program) {
     V = return_value;
     if (V == nullptr) {
         LogError("Invalid field Declarations");
+        return_value = nullptr;
         return;
     }
     // Generate the code for method Declarations
     program->method_list->accept(this);
     V = return_value;
     if (V == nullptr) {
+        return_value = nullptr;
         LogError("Invalid method Declarations");
         return;
     }
     return;
 }
 
+void LLVMIRGenerator::GenerateCodeDump() {
+    if (error > 0) {
+        LogError("Found " + std::to_string(error) +
+                 " errors while compilation");
+    }
+    std::cerr << "Generating LLVM IR Code\n" << std::endl;
+    module->print(llvm::outs(), nullptr);
+}
 
 #endif  // LLVMIRGenerator_cpp

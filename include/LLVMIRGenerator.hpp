@@ -40,6 +40,8 @@ class LLVMIRGenerator : public Visitor {
 
     std::stack<Loop*> loop_stack;
     std::stack<std::set<std::string>> name_stack;
+    int error;
+    bool debug;
 
   public:
     LLVMIRGenerator();
@@ -47,7 +49,12 @@ class LLVMIRGenerator : public Visitor {
     AllocaInst* CreateEntryBlockAlloca(Function* TheFunction,
                                        std::string VarName, std::string type);
 
+    void LogDebugger(std::string error_message);
+    void Debug() { debug = true; }
+    void NotDebug() { debug = false; }
     void LogError(std::string error_message);
+
+    void GenerateCodeDump();
 
     virtual void visit(Program* program) override;
 
@@ -87,6 +94,7 @@ class LLVMIRGenerator : public Visitor {
     virtual void visit(ReturnStatement* return_statement) override;
     virtual void visit(SimpleMethod* simple_method) override;
     virtual void visit(Statement* statement) override;
+    virtual void visit(StatementList* statement_list) override;
     virtual void visit(UnaryExpression* unary_expression) override;
     virtual void visit(UnaryOperation* unary_operation) override;
     virtual void visit(VariableDeclaration* variablle_declaration) override;

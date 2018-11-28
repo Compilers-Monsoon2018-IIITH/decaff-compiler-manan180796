@@ -38,6 +38,7 @@ class Visitor {
     virtual void visit(class ReturnStatement* return_statement) {}
     virtual void visit(class SimpleMethod* simple_method) {}
     virtual void visit(class Statement* statement) {}
+    virtual void visit(class StatementList* statement_list) {}
     virtual void visit(class UnaryExpression* unary_expression) {}
     virtual void visit(class UnaryOperation* unary_operation) {}
     virtual void visit(class VariableDeclaration* variablle_declaration) {}

@@ -60,9 +60,6 @@
 %type <expression> expression;
 %type <unary_expression> unary_expression;
 %type <binary_expression> binary_expression;
-%type <string_lit> binary_operation;
-%type <string_lit> binary_arithematic_operation;
-%type <string_lit> binary_relation_operation;
 %type <location> location;
 %type <method_call> method_call;
 %type <string_lit> method_name;
@@ -246,48 +243,33 @@ unary_expression:
 
 
 binary_expression:
-        expression binary_operation expression
-            {$$ = new BinaryExpression($1,*($2),$3);}
+        expression '+' expression
+            {$$ = new BinaryExpression($1,"+",$3);}
+    |   expression '-' expression
+            {$$ = new BinaryExpression($1,"-",$3);}
+    |   expression '*' expression
+            {$$ = new BinaryExpression($1,"*",$3);}
+    |   expression '/' expression
+            {$$ = new BinaryExpression($1,"/",$3);}
+    |   expression '%' expression
+            {$$ = new BinaryExpression($1,"%",$3);}
+    |   expression '<' expression
+            {$$ = new BinaryExpression($1,"<",$3);}
+    |   expression '>' expression
+            {$$ = new BinaryExpression($1,">",$3);}
+    |   expression or_op expression
+            {$$ = new BinaryExpression($1,"||",$3);}
+    |   expression and_op expression
+            {$$ = new BinaryExpression($1,"&&",$3);}
+    |   expression eq_op expression
+            {$$ = new BinaryExpression($1,"==",$3);}
+    |   expression not_eq_op expression
+            {$$ = new BinaryExpression($1,"!=",$3);}
+    |   expression le_eq_op expression
+            {$$ = new BinaryExpression($1,"<=",$3);}
+    |   expression gr_eq_op expression
+            {$$ = new BinaryExpression($1,">=",$3);}
 ;	
-
-binary_operation:
-        binary_arithematic_operation
-            {$$ = $1;}
-    |   binary_relation_operation
-            {$$ = $1;}
-;
-
-binary_arithematic_operation:
-        '+'
-            {$$ = new std::string("+");}
-    |   '-'
-            {$$ = new std::string("-");}
-    |   '*'
-            {$$ = new std::string("*");}
-    |   '/'
-            {$$ = new std::string("/");}
-    |   '%'
-            {$$ = new std::string("%");}
-;
-
-binary_relation_operation:
-        '<'
-            {$$ = new std::string("<");}
-    |   '>'
-            {$$ = new std::string(">");}
-    |   or_op     
-            {$$ = new std::string("||");}
-    |   and_op     
-            {$$ = new std::string("&&");}
-    |   eq_op     
-            {$$ = new std::string("==");}
-    |   not_eq_op     
-            {$$ = new std::string("!=");}
-    |   le_eq_op     
-            {$$ = new std::string("<=");}
-    |   gr_eq_op     
-            {$$ = new std::string(">=");}
-;
 
 location: 
         id
@@ -356,17 +338,11 @@ int main(int argc, char **argv)
     yyparse();
     // printf("Parsing Over\n");
     LLVMIRGenerator* generator = new LLVMIRGenerator();
-    if(program==nullptr){
-            std::cout<<"wrong"<<std::endl;
-    }else{
-            std::cout<<"right"<<std::endl;
-
-    }
     generator->visit(program);
-    std::cout<<"Parsing Over\n";
+    generator->GenerateCodeDump();
 }
 
 int yyerror(char *s)
 {
-    fprintf(stderr, "error: %s\n", s);
+    std::cerr<<"error: "<< s <<std::endl;
 }
